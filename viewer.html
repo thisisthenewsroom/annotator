@@ -75,7 +75,7 @@
         const dataParam = urlParams.get('data');
         if (dataParam) {
           // 先還原 Base64，再進行網址解碼，防範中文字與符號錯誤
-          const decodedData = decodeURIComponent(atob(dataParam));
+          const decodedData = decodeURIComponent(escape(atob(dataParam)));
           widgetData = JSON.parse(decodedData);
           renderReaderView();
         } else {
