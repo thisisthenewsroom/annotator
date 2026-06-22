@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Viewer by The Collective</title>
+  <style>
+    :root {
+      --primary: #111111; --bg-light: #ffffff; --card-bg: #ffffff; --text-main: #1d1d1f; --text-muted: #86868b;
+      --hl-orange: rgba(255, 183, 77, 0.35); --hl-orange-line: #fb8c00;
+      --hl-yellow: rgba(255, 213, 79, 0.3);  --hl-yellow-line: #ffb300;
+      --hl-red: rgba(255, 143, 143, 0.3);    --hl-red-line: #e53935;
+      --hl-green: rgba(165, 214, 167, 0.35); --hl-green-line: #43a047;
+      --hl-blue: rgba(144, 202, 249, 0.35);  --hl-blue-line: #1e88e5;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif; background-color: var(--bg-light); color: var(--text-main); line-height: 1.8; margin: 0; padding: 10px; -webkit-font-smoothing: antialiased; }
+    .widget-wrapper { max-width: 700px; margin: 0 auto; padding: 20px 20px 80px 20px; position: relative; box-sizing: border-box; }
+    .doc-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
+    .doc-title { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; color: var(--primary); margin: 0; line-height: 1.2; }
+    .slider-nav { display: inline-flex; gap: 8px; }
+    .nav-arrow { width: 34px; height: 34px; border-radius: 50%; border: 1px solid #d2d2d7; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; transition: all 0.2s; -webkit-user-select: none; user-select: none; }
+    .nav-arrow:hover { background: #f5f5f7; border-color: #86868b; }
+    .legend-container { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 24px; padding: 0 4px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-icon { width: 14px; height: 14px; display: inline-block; border-bottom: 2px solid; border-radius: 2px; }
+    .legend-icon.c-orange { background: var(--hl-orange); border-color: var(--hl-orange-line); }
+    .legend-icon.c-yellow { background: var(--hl-yellow); border-color: var(--hl-yellow-line); }
+    .legend-icon.c-red { background: var(--hl-red); border-color: var(--hl-red-line); }
+    .legend-icon.c-green { background: var(--hl-green); border-color: var(--hl-green-line); }
+    .legend-icon.c-blue { background: var(--hl-blue); border-color: var(--hl-blue-line); }
+    .slider-container { display: flex; overflow-x: auto; scroll-behavior: smooth; gap: 32px; padding: 10px 4px 20px 4px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+    .slider-container::-webkit-scrollbar { display: none; }
+    .doc-card { flex: 0 0 100%; scroll-snap-align: start; background: var(--card-bg); padding: 36px; border-radius: 24px; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.01); border: 1px solid rgba(0,0,0,0.03); }
+    .card-meta { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; }
+    .hl { border-bottom: 2px solid; cursor: help; display: inline; border-radius: 2px; padding: 1px 0; }
+    .hl.c-orange { background: var(--hl-orange); border-color: var(--hl-orange-line); }
+    .hl.c-yellow { background: var(--hl-yellow); border-color: var(--hl-yellow-line); }
+    .hl.c-red { background: var(--hl-red); border-color: var(--hl-red-line); }
+    .hl.c-green { background: var(--hl-green); border-color: var(--hl-green-line); }
+    .hl.c-blue { background: var(--hl-blue); border-color: var(--hl-blue-line); }
+    .global-tooltip { position: absolute; display: none; opacity: 0; width: 260px; background: rgba(20, 20, 22, 0.98); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: #fff; padding: 12px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5; z-index: 9999; box-shadow: 0 12px 28px rgba(0,0,0,0.25); transition: opacity 0.15s ease; pointer-events: none; text-align: left; box-sizing: border-box; }
+    .global-tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -6px; border-width: 6px; border-style: solid; border-color: rgba(20, 20, 22, 0.98) transparent transparent transparent; }
+    .brand-logo-container { position: absolute; bottom: 25px; right: 24px; display: flex; align-items: center; pointer-events: none; }
+    .brand-logo { height: 26px; width: auto; display: block; }
+    #mobile-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: #1c1c1e; color: white; padding: 24px; border-top-left-radius: 24px; border-top-right-radius: 24px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1); z-index: 99999; }
+    #mobile-sheet.active { transform: translateY(0); }
+    @media (max-width: 767px) { .global-tooltip { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="widget-wrapper" id="widget-main-container">
+    <div class="doc-header">
+      <h1 class="doc-title" id="render-title">載入中...</h1>
+      <div class="slider-nav">
+        <button class="nav-arrow" onclick="slideCard(-1)">‹</button>
+        <button class="nav-arrow" onclick="slideCard(1)">›</button>
+      </div>
+    </div>
+    <div class="legend-container" id="render-legends"></div>
+    <div class="slider-container" id="slider-track"></div>
+    <div class="brand-logo-container"><img src="https://thecollectivehk.com/wp-content/uploads/2022/11/HEADER2x.png" class="brand-logo" alt="The Collective"></div>
+    <div class="global-tooltip" id="live-tooltip"></div>
+  </div>
+  <div id="mobile-sheet" onclick="closeSheet()">
+    <div id="sheet-header-color" style="font-size: 12px; margin-bottom: 8px; font-weight: 600;"></div>
+    <div id="sheet-text" style="font-size: 15px; line-height: 1.6;"></div>
+  </div>
+
+  <script>
+    let widgetData = { title: "無資料", labels: {}, pages: [] };
+
+    window.onload = function() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const dataParam = urlParams.get('data');
+        if (dataParam) {
+          // 安全的 UTF-8 解碼邏輯，防中文字亂碼
+          const binaryString = atob(dataParam);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const decoder = new TextDecoder();
+          widgetData = JSON.parse(decoder.decode(bytes));
+          renderReaderView();
+        } else {
+          document.getElementById('render-title').innerText = "未偵測到資料載入";
+        }
+      } catch (e) {
+        console.error(e);
+        document.getElementById('render-title').innerText = "資料解析錯誤";
+      }
+    };
+
+    function renderReaderView() {
+      document.getElementById('render-title').innerText = widgetData.title;
+      const legendContainer = document.getElementById('render-legends');
+      legendContainer.innerHTML = '';
+      ['orange', 'yellow', 'red', 'green', 'blue'].forEach(color => {
+        if (widgetData.labels[color] && widgetData.labels[color].trim() !== "") {
+          legendContainer.innerHTML += `<div class="legend-item"><span class="legend-icon c-${color}"></span><span>${escapeHtml(widgetData.labels[color])}</span></div>`;
+        }
+      });
+      const track = document.getElementById('slider-track');
+      track.innerHTML = '';
+      widgetData.pages.forEach((page, pIdx) => {
+        track.innerHTML += `<div class="doc-card" id="card-${pIdx}"><div class="card-meta">${escapeHtml(page.tabName)}</div><div style="font-size: 16px; font-weight:400; line-height:1.8;">${generateAnnotatedHtml(page.content, page.annotations, pIdx)}</div></div>`;
+      });
+      bindTooltipEvents();
+    }
+
+    function generateAnnotatedHtml(content, annotations, pIdx) {
+      if (!annotations || annotations.length === 0) return escapeHtml(content).replace(/\n/g, '<br>');
+      const sortedAnns = [...annotations].sort((a, b) => b.text.length - a.text.length);
+      let html = escapeHtml(content);
+      sortedAnns.forEach((ann, aIdx) => {
+        const escapedText = escapeHtml(ann.text);
+        if (!escapedText) return;
+        const regex = new RegExp(`(${escapedText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'g');
+        html = html.replace(regex, `<span class="hl c-${ann.color||'orange'}" data-pidx="${pIdx}" data-aidx="${aIdx}">$1</span>`);
+      });
+      return html.replace(/\n/g, '<br>');
+    }
+
+    function bindTooltipEvents() {
+      const tooltip = document.getElementById('live-tooltip');
+      const container = document.getElementById('widget-main-container');
+      document.querySelectorAll('.hl').forEach(el => {
+        el.addEventListener('mouseenter', function() {
+          if (window.innerWidth < 768) return;
+          const pIdx = this.getAttribute('data-pidx');
+          const aIdx = this.getAttribute('data-aidx');
+          const ann = widgetData.pages[pIdx].annotations[aIdx];
+          tooltip.innerHTML = `<strong style="color:#fff; font-size:11px; letter-spacing:0.5px;">${escapeHtml(widgetData.labels[ann.color])||'註解'}</strong><div style="margin-top:4px;">${escapeHtml(ann.note)}</div>`;
+          tooltip.style.display = 'block'; tooltip.style.opacity = '1';
+          const elRect = this.getBoundingClientRect(), containerRect = container.getBoundingClientRect();
+          const elLeft = elRect.left - containerRect.left, elTop = elRect.top - containerRect.top;
+          let targetLeft = elLeft + (elRect.width / 2) - (tooltip.offsetWidth / 2);
+          let targetTop = elTop - tooltip.offsetHeight - 12;
+          if (targetLeft < 10) targetLeft = 10;
+          else if (targetLeft > containerRect.width - tooltip.offsetWidth - 10) targetLeft = containerRect.width - tooltip.offsetWidth - 10;
+          const arrowOffset = (elLeft + (elRect.width / 2)) - targetLeft;
+          let styleEl = document.getElementById('arrow-dynamic-style') || document.createElement('style');
+          styleEl.id = 'arrow-dynamic-style'; document.head.appendChild(styleEl);
+          styleEl.innerHTML = `.global-tooltip::after { left: ${arrowOffset}px !important; }`;
+          tooltip.style.left = `${targetLeft}px`; tooltip.style.top = `${targetTop}px`;
+        });
+        el.addEventListener('mouseleave', function() { tooltip.style.display = 'none'; tooltip.style.opacity = '0'; });
+        el.addEventListener('click', function(e) {
+          if (window.innerWidth < 768) {
+            e.stopPropagation();
+            const pIdx = this.getAttribute('data-pidx'), aIdx = this.getAttribute('data-aidx');
+            const ann = widgetData.pages[pIdx].annotations[aIdx];
+            const headerEl = document.getElementById('sheet-header-color');
+            headerEl.innerText = widgetData.labels[ann.color] || "分析摘要";
+            const colors = {orange:'#fb8c00', yellow:'#ffb300', red:'#e53935', green:'#43a047', blue:'#1e88e5'};
+            headerEl.style.color = colors[ann.color] || '#86868b';
+            document.getElementById('sheet-text').innerText = ann.note;
+            document.getElementById('mobile-sheet').classList.add('active');
+          }
+        });
+      });
+    }
+    function slideCard(direction) { const track = document.getElementById('slider-track'); const card = track.querySelector('.doc-card'); if (card) track.scrollLeft += direction * (card.offsetWidth + 32); }
+    function closeSheet() { document.getElementById('mobile-sheet').classList.remove('active'); }
+    function escapeHtml(str) { return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); }
+  </script>
+</body>
+</html>
