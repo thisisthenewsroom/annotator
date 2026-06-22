@@ -3,17 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Viewer by The Collective</title>
+  <title>Annotator Viewer by The Collective</title>
   <style>
     :root {
-      --primary: #111111; --bg-light: #ffffff; --card-bg: #ffffff; --text-main: #1d1d1f; --text-muted: #86868b;
+      --primary: #111111;
+      --bg-light: #f5f5f7;
+      --card-bg: #ffffff;
+      --text-main: #1d1d1f;
+      --text-muted: #86868b;
       --hl-orange: rgba(255, 183, 77, 0.35); --hl-orange-line: #fb8c00;
       --hl-yellow: rgba(255, 213, 79, 0.3);  --hl-yellow-line: #ffb300;
       --hl-red: rgba(255, 143, 143, 0.3);    --hl-red-line: #e53935;
       --hl-green: rgba(165, 214, 167, 0.35); --hl-green-line: #43a047;
       --hl-blue: rgba(144, 202, 249, 0.35);  --hl-blue-line: #1e88e5;
     }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", sans-serif; background-color: var(--bg-light); color: var(--text-main); line-height: 1.8; margin: 0; padding: 10px; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "SF Pro Text", "Noto Sans TC", sans-serif;
+      background-color: #ffffff; color: var(--text-main); line-height: 1.8; margin: 0; padding: 20px;
+      -webkit-font-smoothing: antialiased;
+    }
     .widget-wrapper { max-width: 700px; margin: 0 auto; padding: 20px 20px 80px 20px; position: relative; box-sizing: border-box; }
     .doc-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; padding: 0 4px; }
     .doc-title { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; color: var(--primary); margin: 0; line-height: 1.2; }
@@ -30,7 +38,7 @@
     .legend-icon.c-blue { background: var(--hl-blue); border-color: var(--hl-blue-line); }
     .slider-container { display: flex; overflow-x: auto; scroll-behavior: smooth; gap: 32px; padding: 10px 4px 20px 4px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
     .slider-container::-webkit-scrollbar { display: none; }
-    .doc-card { flex: 0 0 100%; scroll-snap-align: start; background: var(--card-bg); padding: 36px; border-radius: 24px; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.01); border: 1px solid rgba(0,0,0,0.03); }
+    .doc-card { flex: 0 0 100%; scroll-snap-align: start; background: var(--card-bg); padding: 36px; border-radius: 24px; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04); border: 1px solid rgba(0,0,0,0.03); }
     .card-meta { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 16px; }
     .hl { border-bottom: 2px solid; cursor: help; display: inline; border-radius: 2px; padding: 1px 0; }
     .hl.c-orange { background: var(--hl-orange); border-color: var(--hl-orange-line); }
@@ -48,6 +56,7 @@
   </style>
 </head>
 <body>
+
   <div class="widget-wrapper" id="widget-main-container">
     <div class="doc-header">
       <h1 class="doc-title" id="render-title">載入中...</h1>
@@ -58,9 +67,12 @@
     </div>
     <div class="legend-container" id="render-legends"></div>
     <div class="slider-container" id="slider-track"></div>
-    <div class="brand-logo-container"><img src="https://thecollectivehk.com/wp-content/uploads/2022/11/HEADER2x.png" class="brand-logo" alt="The Collective"></div>
+    <div class="brand-logo-container">
+      <img src="https://thecollectivehk.com/wp-content/uploads/2022/11/HEADER2x.png" class="brand-logo" alt="The Collective">
+    </div>
     <div class="global-tooltip" id="live-tooltip"></div>
   </div>
+
   <div id="mobile-sheet" onclick="closeSheet()">
     <div id="sheet-header-color" style="font-size: 12px; margin-bottom: 8px; font-weight: 600;"></div>
     <div id="sheet-text" style="font-size: 15px; line-height: 1.6;"></div>
@@ -73,31 +85,22 @@
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const dataParam = urlParams.get('data');
+        
         if (dataParam) {
-        // 將網址安全 Base64 還原成標準 UTF-8 字串
-          const binaryString = atob(dataParam.replace(/-/g, '+').replace(/_/g, '/'));
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-          const decodedData = new TextDecoder().decode(bytes);
+          // 網址安全解碼
+          const base64 = dataParam.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonString = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
           
-          widgetData = JSON.parse(decodedData);
+          widgetData = JSON.parse(jsonString);
           renderReaderView();
         } else {
+          // 如果沒有帶參數，應該顯示這行，而不是卡在載入中
           document.getElementById('render-title').innerText = "未偵測到資料載入";
         }
       } catch (e) {
-        console.error("解碼失敗原因:", e);
-        document.getElementById('render-title').innerText = "資料解析錯誤";
-      }
-    };
-          renderReaderView();
-        } else {
-          document.getElementById('render-title').innerText = "未偵測到資料載入";
-        }
-      } catch (e) {
-        console.error(e);
+        console.error("解碼失敗:", e);
         document.getElementById('render-title').innerText = "資料解析錯誤";
       }
     };
@@ -106,15 +109,23 @@
       document.getElementById('render-title').innerText = widgetData.title;
       const legendContainer = document.getElementById('render-legends');
       legendContainer.innerHTML = '';
-      ['orange', 'yellow', 'red', 'green', 'blue'].forEach(color => {
+      const order = ['orange', 'yellow', 'red', 'green', 'blue'];
+      order.forEach(color => {
         if (widgetData.labels[color] && widgetData.labels[color].trim() !== "") {
           legendContainer.innerHTML += `<div class="legend-item"><span class="legend-icon c-${color}"></span><span>${escapeHtml(widgetData.labels[color])}</span></div>`;
         }
       });
+
       const track = document.getElementById('slider-track');
       track.innerHTML = '';
       widgetData.pages.forEach((page, pIdx) => {
-        track.innerHTML += `<div class="doc-card" id="card-${pIdx}"><div class="card-meta">${escapeHtml(page.tabName)}</div><div style="font-size: 16px; font-weight:400; line-height:1.8;">${generateAnnotatedHtml(page.content, page.annotations, pIdx)}</div></div>`;
+        const pageHtml = generateAnnotatedHtml(page.content, page.annotations, pIdx);
+        track.innerHTML += `
+          <div class="doc-card" id="card-${pIdx}">
+            <div class="card-meta">${escapeHtml(page.tabName)}</div>
+            <div style="font-size: 16px; font-weight:400; line-height:1.8;">${pageHtml}</div>
+          </div>
+        `;
       });
       bindTooltipEvents();
     }
@@ -126,10 +137,15 @@
       sortedAnns.forEach((ann, aIdx) => {
         const escapedText = escapeHtml(ann.text);
         if (!escapedText) return;
-        const regex = new RegExp(`(${escapedText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'g');
-        html = html.replace(regex, `<span class="hl c-${ann.color||'orange'}" data-pidx="${pIdx}" data-aidx="${aIdx}">$1</span>`);
+        const regexStr = escapedText.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`(${regexStr})`, 'g');
+        html = html.replace(regex, `<span class="hl c-${ann.color || 'orange'}" data-pidx="${pIdx}" data-aidx="${aIdx}">$1</span>`);
       });
       return html.replace(/\n/g, '<br>');
+    }
+
+    function escapeHtml(string) {
+      return String(string).replace(/[&<>"']/g, s => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[s]));
     }
 
     function bindTooltipEvents() {
@@ -141,15 +157,16 @@
           const pIdx = this.getAttribute('data-pidx');
           const aIdx = this.getAttribute('data-aidx');
           const ann = widgetData.pages[pIdx].annotations[aIdx];
-          tooltip.innerHTML = `<strong style="color:#fff; font-size:11px; letter-spacing:0.5px;">${escapeHtml(widgetData.labels[ann.color])||'註解'}</strong><div style="margin-top:4px;">${escapeHtml(ann.note)}</div>`;
+          tooltip.innerHTML = `<strong style="color:#fff; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;">${escapeHtml(widgetData.labels[ann.color]) || '註解'}</strong><div style="margin-top:4px;">${escapeHtml(ann.note)}</div>`;
           tooltip.style.display = 'block'; tooltip.style.opacity = '1';
           const elRect = this.getBoundingClientRect(), containerRect = container.getBoundingClientRect();
-          const elLeft = elRect.left - containerRect.left, elTop = elRect.top - containerRect.top;
-          let targetLeft = elLeft + (elRect.width / 2) - (tooltip.offsetWidth / 2);
-          let targetTop = elTop - tooltip.offsetHeight - 12;
-          if (targetLeft < 10) targetLeft = 10;
-          else if (targetLeft > containerRect.width - tooltip.offsetWidth - 10) targetLeft = containerRect.width - tooltip.offsetWidth - 10;
-          const arrowOffset = (elLeft + (elRect.width / 2)) - targetLeft;
+          const elLeftInContainer = elRect.left - containerRect.left;
+          const elTopInContainer = elRect.top - containerRect.top;
+          let targetLeft = elLeftInContainer + (elRect.width / 2) - (tooltip.offsetWidth / 2);
+          let targetTop = elTopInContainer - tooltip.offsetHeight - 12;
+          const minLeftGap = 10; const maxLeftBoundary = containerRect.width - tooltip.offsetWidth - minLeftGap;
+          if (targetLeft < minLeftGap) targetLeft = minLeftGap; else if (targetLeft > maxLeftBoundary) targetLeft = maxLeftBoundary;
+          const arrowOffset = (elLeftInContainer + (elRect.width / 2)) - targetLeft;
           let styleEl = document.getElementById('arrow-dynamic-style') || document.createElement('style');
           styleEl.id = 'arrow-dynamic-style'; document.head.appendChild(styleEl);
           styleEl.innerHTML = `.global-tooltip::after { left: ${arrowOffset}px !important; }`;
@@ -173,7 +190,6 @@
     }
     function slideCard(direction) { const track = document.getElementById('slider-track'); const card = track.querySelector('.doc-card'); if (card) track.scrollLeft += direction * (card.offsetWidth + 32); }
     function closeSheet() { document.getElementById('mobile-sheet').classList.remove('active'); }
-    function escapeHtml(str) { return String(str).replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[s])); }
   </script>
 </body>
 </html>
