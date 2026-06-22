@@ -74,15 +74,21 @@
         const urlParams = new URLSearchParams(window.location.search);
         const dataParam = urlParams.get('data');
         if (dataParam) {
-          // 先還原 Base64，再進行網址解碼，防範中文字與符號錯誤
-          const decodedData = decodeURIComponent(escape(atob(dataParam)));
+        // 將網址安全 Base64 還原成標準 UTF-8 字串
+          const binaryString = atob(dataParam.replace(/-/g, '+').replace(/_/g, '/'));
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const decodedData = new TextDecoder().decode(bytes);
+          
           widgetData = JSON.parse(decodedData);
           renderReaderView();
         } else {
           document.getElementById('render-title').innerText = "未偵測到資料載入";
         }
       } catch (e) {
-        console.error(e);
+        console.error("解碼失敗原因:", e);
         document.getElementById('render-title').innerText = "資料解析錯誤";
       }
     };
