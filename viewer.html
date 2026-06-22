@@ -74,14 +74,18 @@
         const urlParams = new URLSearchParams(window.location.search);
         const dataParam = urlParams.get('data');
         if (dataParam) {
-          // 安全的 UTF-8 解碼邏輯，防中文字亂碼
-          const binaryString = atob(dataParam);
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-          const decoder = new TextDecoder();
-          widgetData = JSON.parse(decoder.decode(bytes));
+          // 先還原 Base64，再進行網址解碼，防範中文字與符號錯誤
+          const decodedData = decodeURIComponent(atob(dataParam));
+          widgetData = JSON.parse(decodedData);
+          renderReaderView();
+        } else {
+          document.getElementById('render-title').innerText = "未偵測到資料載入";
+        }
+      } catch (e) {
+        console.error(e);
+        document.getElementById('render-title').innerText = "資料解析錯誤";
+      }
+    };
           renderReaderView();
         } else {
           document.getElementById('render-title').innerText = "未偵測到資料載入";
